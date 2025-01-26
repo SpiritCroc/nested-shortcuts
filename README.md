@@ -3,6 +3,14 @@
 Ever since leaving [AwesomeWM](https://awesomewm.org/) for a Wayland alternative, I've been missing the ["awful" menus](https://awesomewm.org/doc/api/libraries/awful.menu.html), which gave me some kind of multi-layer keyboard shortcuts for launching applications.  
 Since I was not able to find any standalone replacement application launcher featuring fully configurable menu hierarchy and keyboard shortcuts, I eventually wrote my own.
 
+## Installation
+
+```
+> git clone https://github.com/SpiritCroc/nested-shortcuts.git
+> cd nested-shortcuts
+> cargo install --path path/where/to/install
+```
+
 ## Configuration
 
 The menu is defined via yaml, compare [example-menu.yml](example-menu.yml) for an example.
