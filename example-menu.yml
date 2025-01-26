@@ -1,0 +1,32 @@
+- title: A test
+  shortcut: a
+  exec: notify-send "A test" "with args"
+- title: Test
+  shortcut: e
+  exec: notify-send Test
+- title: Test1
+  shortcut: '1'
+  exec: notify-send Test1
+- title: xeyes
+  shortcut: x
+  exec: xeyes
+- title: Menu 1
+  shortcut: m
+  entries:
+  - title: With shortcut
+    shortcut: w
+    exec: notify-send Test "with shortcut"
+  - title: Without shortcut
+    exec: notify-send Test "without shortcut"
+- title: System
+  shortcut: s
+  entries:
+  - title: Poweroff
+    shortcut: p
+    exec: poweroff
+  - title: Reboot
+    shortcut: r
+    exec: reboot
+  - title: Suspend
+    shortcut: s
+    exec: systemctl suspend

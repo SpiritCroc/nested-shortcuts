@@ -2,9 +2,15 @@ use crate::menu::{MenuEntry, MenuAction};
 
 use iced::{
     Subscription, Length,
-    widget::{button, text, Column},
+    widget::{
+        button,
+        rich_text,
+        span,
+        Column,
+    },
     keyboard::Key,
     keyboard,
+    window,
 };
 
 use std::process::{Command, exit};
@@ -12,20 +18,63 @@ use std::process::{Command, exit};
 pub struct MenuWidget {
     entries: Vec<MenuEntry>,
     sub_menu: Option<Box<MenuWidget>>,
+    // If true, run exec, else print the command to execute to pipe into some other tool
+    exec_standalone: bool,
 }
 
 #[derive(Debug, Clone)]
 pub enum Message {
     MenuClick { action: MenuAction },
     ShortcutKey { key: String },
-    EscKey,
+    NavigateBack,
+    Exit,
+}
+
+impl From<MenuAction> for Message {
+    fn from(item: MenuAction) -> Self {
+        Message::MenuClick { action: item }
+    }
+}
+
+impl MenuEntry {
+    fn label(&self) -> iced::widget::text::Rich<Message> {
+        if let Some(c) = &self.shortcut {
+            let index = self.title.to_lowercase().find(&c.to_lowercase());
+            if let Some(index) = index {
+                if index < self.title.len() - 1 {
+                    rich_text([
+                        span(&self.title[0..index]),
+                        span(&self.title[index..index+1]).underline(true),
+                        span(&self.title[index+1..]),
+                    ])
+                } else {
+                    rich_text([
+                        span(&self.title[0..index]),
+                        span(&self.title[index..]).underline(true),
+                    ])
+                }
+            } else {
+                rich_text([
+                    span(&self.title),
+                    span(" ("),
+                    span(c).underline(true),
+                    span(")"),
+                ])
+            }
+        } else {
+            rich_text([
+                span(&self.title),
+            ])
+        }
+    }
 }
 
 impl MenuWidget {
-    pub fn new(entries: Vec<MenuEntry>) -> MenuWidget {
+    pub fn new(entries: Vec<MenuEntry>, exec_standalone: bool) -> MenuWidget {
         MenuWidget {
             entries,
-            sub_menu: None
+            sub_menu: None,
+            exec_standalone,
         }
     }
 
@@ -35,12 +84,15 @@ impl MenuWidget {
         }
         Column::with_children(
             self.entries.iter().map(|e| {
-                button(text(e.name.clone())).on_press(
-                    Message::MenuClick { action: e.action.clone() }
-                ).into()
+                button(e.label()).on_press(
+                    e.action.clone().into()
+                )
+                    .style(button::text)
+                    .width(Length::Fill)
+                    .into()
             }).collect::<Vec<_>>()
         )
-            .width(Length::Shrink)
+            .width(Length::Fill)
             .height(Length::Shrink)
     }
 
@@ -60,17 +112,23 @@ impl MenuWidget {
             Message::MenuClick { action } => {
                 match action {
                     MenuAction::Program { exec } => {
-                        Command::new("sh")
-                            .arg("-c")
-                            .arg(exec)
-                            .spawn()
-                            .expect("Failed to spawn program");
+                        if self.exec_standalone {
+                            eprintln!("Launch: {exec}");
+                            Command::new("sh")
+                                .arg("-c")
+                                .arg(exec)
+                                .spawn()
+                                .expect("Failed to spawn program");
+                        } else {
+                            print!("{exec}");
+                        }
                         exit(0);
                     }
                     MenuAction::SubMenu { entries } => {
+                        eprintln!("Navigate to submenu");
                         self.sub_menu = Some(
                             Box::new(
-                                MenuWidget::new(entries)
+                                MenuWidget::new(entries, self.exec_standalone)
                             )
                         );
                     }
@@ -86,24 +144,49 @@ impl MenuWidget {
                         self.update(
                             Message::MenuClick { action: entry.action.clone() }
                         );
+                        return;
                     }
                 }
+                eprintln!("Ignore key without active shortcut");
             }
-            Message::EscKey => {
+            Message::NavigateBack => {
+                eprintln!("Navigate back");
                 if !self.close_leaf_menu() {
                     exit(0);
                 }
             }
+            Message::Exit => {
+                eprintln!("Exit");
+                exit(0);
+            }
         }
     }
 
-    pub fn subscription(&self) -> Subscription<Message> {
+    fn keyboard_subscription(&self) -> Subscription<Message> {
         keyboard::on_key_press(|key, _|
             match key {
                 Key::Character(c) => Some(Message::ShortcutKey { key: c.to_string() }),
-                Key::Named(keyboard::key::Named::Escape) => Some(Message::EscKey),
+                Key::Named(keyboard::key::Named::Escape) => Some(Message::NavigateBack),
+                Key::Named(keyboard::key::Named::Backspace) => Some(Message::NavigateBack),
                 _ => None,
             }
         )
+    }
+
+    fn window_event_subscription(&self) -> Subscription<Message> {
+        iced::event::listen_with(|event, _status, _id| {
+            if let iced::event::Event::Window(window::Event::Unfocused) = event {
+                Some(Message::Exit)
+            } else {
+                None
+            }
+        })
+    }
+
+    pub fn subscription(&self) -> Subscription<Message> {
+        Subscription::batch(vec![
+            self.keyboard_subscription(),
+            self.window_event_subscription(),
+        ])
     }
 }

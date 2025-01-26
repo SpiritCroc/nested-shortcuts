@@ -4,4 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-iced = "0.13.1"
+anyhow = "1.0.95"
+# TODO: use crates.io again on update to > 0.13.1,
+# i.e. with fix for https://github.com/iced-rs/iced/issues/2630
+#iced = "0.13.1"
+iced = { git = "https://github.com/iced-rs/iced.git", rev = "d034bd73d8fb176ef9edfc76a6198711354a97f1" }
+serde = "1.0.217"
+serde_yml = "0.0.12"
