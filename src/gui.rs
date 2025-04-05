@@ -103,7 +103,7 @@ impl MenuWidget {
             .width(Length::Fill)
             .height(Length::Shrink);
         if let Some(start) = &self.start_time {
-            println!("Menu rendered after {:?}", start.elapsed());
+            eprintln!("Menu rendered after {:?}", start.elapsed());
         }
         result
     }

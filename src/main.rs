@@ -15,7 +15,7 @@ use std::{
 fn main() -> anyhow::Result<()> {
     let start = Instant::now();
     let menu = build_menu_from_args()?;
-    println!("Menu read after {:?}", start.elapsed());
+    eprintln!("Menu read after {:?}", start.elapsed());
 
     let window_settings = iced::window::Settings {
         resizable: false,
@@ -40,7 +40,7 @@ fn main() -> anyhow::Result<()> {
                 std::io::stdout().is_terminal(),
                 Some(start)
             );
-            println!("Widget created after {:?}", start.elapsed());
+            eprintln!("Widget created after {:?}", start.elapsed());
             (widget.into(), Task::none())
         })?;
     Ok(())
