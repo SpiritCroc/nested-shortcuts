@@ -9,10 +9,13 @@ use iced::{Color, Task, Theme, theme::Custom};
 use std::{
     env,
     io::IsTerminal,
+    time::Instant,
 };
 
 fn main() -> anyhow::Result<()> {
+    let start = Instant::now();
     let menu = build_menu_from_args()?;
+    println!("Menu read after {:?}", start.elapsed());
 
     let window_settings = iced::window::Settings {
         resizable: false,
@@ -31,16 +34,19 @@ fn main() -> anyhow::Result<()> {
             background_color: Color::from_rgba(0.0, 0.0, 0.0, 0.95),
             text_color: Color::WHITE,
         })
-        .run_with(|| {
+        .run_with(move || {
             let widget = MenuWidget::new(
                 menu,
                 std::io::stdout().is_terminal(),
+                Some(start)
             );
+            println!("Widget created after {:?}", start.elapsed());
             (widget.into(), Task::none())
         })?;
     Ok(())
 }
 
+/*
 impl Default for MenuWidget {
     fn default() -> MenuWidget {
         MenuWidget::new(
@@ -49,6 +55,7 @@ impl Default for MenuWidget {
         )
     }
 }
+*/
 
 fn build_menu_from_args() -> anyhow::Result<Vec<MenuEntry>> {
     let args: Vec<String> = env::args().collect();

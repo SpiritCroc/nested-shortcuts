@@ -11,6 +11,7 @@ use iced::{
     keyboard::Key,
     keyboard,
     window,
+    time::Instant,
 };
 
 use std::process::{Command, exit};
@@ -20,6 +21,7 @@ pub struct MenuWidget {
     sub_menu: Option<Box<MenuWidget>>,
     // If true, run exec, else print the command to execute to pipe into some other tool
     exec_standalone: bool,
+    start_time: Option<Instant>,
 }
 
 #[derive(Debug, Clone)]
@@ -70,11 +72,12 @@ impl MenuEntry {
 }
 
 impl MenuWidget {
-    pub fn new(entries: Vec<MenuEntry>, exec_standalone: bool) -> MenuWidget {
+    pub fn new(entries: Vec<MenuEntry>, exec_standalone: bool, start_time: Option<Instant>) -> MenuWidget {
         MenuWidget {
             entries,
             sub_menu: None,
             exec_standalone,
+            start_time,
         }
     }
 
@@ -82,7 +85,7 @@ impl MenuWidget {
         if let Some(menu) = &self.sub_menu {
             return menu.view();
         }
-        Column::with_children(
+        let result = Column::with_children(
             self.entries.iter().map(|e| {
                 button(e.label()).on_press(
                     e.action.clone().into()
@@ -93,7 +96,11 @@ impl MenuWidget {
             }).collect::<Vec<_>>()
         )
             .width(Length::Fill)
-            .height(Length::Shrink)
+            .height(Length::Shrink);
+        if let Some(start) = &self.start_time {
+            println!("Menu rendered after {:?}", start.elapsed());
+        }
+        result
     }
 
     fn close_leaf_menu(&mut self) -> bool {
@@ -128,7 +135,7 @@ impl MenuWidget {
                         eprintln!("Navigate to submenu");
                         self.sub_menu = Some(
                             Box::new(
-                                MenuWidget::new(entries, self.exec_standalone)
+                                MenuWidget::new(entries, self.exec_standalone, None)
                             )
                         );
                     }
