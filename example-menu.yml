@@ -20,6 +20,7 @@
     exec: notify-send Test "without shortcut"
 - title: System
   shortcut: s
+  shortcut_hint_offset: 1
   entries:
   - title: Poweroff
     shortcut: p

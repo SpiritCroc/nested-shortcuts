@@ -9,6 +9,8 @@ pub struct MenuEntry {
     pub shortcut: Option<String>,
     #[serde(flatten)]
     pub action: MenuAction,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub shortcut_hint_offset: Option<usize>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

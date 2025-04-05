@@ -41,7 +41,12 @@ impl From<MenuAction> for Message {
 impl MenuEntry {
     fn label(&self) -> iced::widget::text::Rich<Message> {
         if let Some(c) = &self.shortcut {
-            let index = self.title.to_lowercase().find(&c.to_lowercase());
+            let hint_offset = &self.shortcut_hint_offset.unwrap_or_default();
+            let index = if *hint_offset <= 0 {
+                self.title.to_lowercase().find(&c.to_lowercase())
+            } else {
+                self.title.to_lowercase().match_indices(&c.to_lowercase()).nth(*hint_offset).map(|(i, _)| i)
+            };
             if let Some(index) = index {
                 if index < self.title.len() - 1 {
                     rich_text([
