@@ -39,7 +39,7 @@ impl From<MenuAction> for Message {
 }
 
 impl MenuEntry {
-    fn label(&self) -> iced::widget::text::Rich<Message> {
+    fn label(&self) -> iced::widget::text::Rich<'_, Message> {
         if let Some(c) = &self.shortcut {
             let hint_offset = &self.shortcut_hint_offset.unwrap_or_default();
             let index = if *hint_offset <= 0 {
@@ -86,7 +86,7 @@ impl MenuWidget {
         }
     }
 
-    pub fn view(&self) -> Column<Message> {
+    pub fn view(&self) -> Column<'_, Message> {
         if let Some(menu) = &self.sub_menu {
             return menu.view();
         }
