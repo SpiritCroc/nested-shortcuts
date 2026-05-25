@@ -5,7 +5,7 @@ mod theme;
 use menu::{MenuEntry, build_menu_from_file};
 use gui::MenuWidget;
 
-use iced::{Color, Task, Theme, theme::Custom};
+use iced::{Color, Theme, theme::Custom};
 use std::{
     env,
     io::IsTerminal,
@@ -24,26 +24,43 @@ fn main() -> anyhow::Result<()> {
         exit_on_close_request: true,
         position: iced::window::Position::Centered,
         level: iced::window::Level::AlwaysOnTop,
+        platform_specific: iced::window::settings::PlatformSpecific {
+            application_id: "nested-shortcuts".to_string(),
+            ..Default::default()
+        },
         ..Default::default()
     };
-    iced::application("nmenu", MenuWidget::update, MenuWidget::view)
-        .subscription(MenuWidget::subscription)
-        .window(window_settings)
-        .theme(move |_state| Theme::Custom(Custom::new("nested-shortcuts".to_string(), theme::PALETTE_DARK).into()))
-        .style(|_state, _theme| iced::theme::Style {
-            background_color: Color::from_rgba(0.0, 0.0, 0.0, 0.95),
-            text_color: Color::WHITE,
-        })
-        .run_with(move || {
+    iced::application(
+        move || {
             let widget = MenuWidget::new(
-                menu,
+                menu.clone(),
                 std::io::stdout().is_terminal(),
                 Some(start)
             );
             eprintln!("Widget created after {:?}", start.elapsed());
-            (widget.into(), Task::none())
-        })?;
+            widget
+        },
+        MenuWidget::update,
+        MenuWidget::view,
+    )
+        .title("nmenu")
+        .subscription(MenuWidget::subscription)
+        .window(window_settings)
+        .theme(app_theme)
+        .style(app_style)
+        .run()?;
     Ok(())
+}
+
+fn app_theme(_state: &MenuWidget) -> Theme {
+    Theme::Custom(Custom::new("nested-shortcuts".to_string(), theme::PALETTE_DARK).into())
+}
+
+fn app_style(_state: &MenuWidget, _theme: &Theme) -> iced::theme::Style {
+    iced::theme::Style {
+        background_color: Color::from_rgba(0.0, 0.0, 0.0, 0.95),
+        text_color: Color::WHITE,
+    }
 }
 
 /*

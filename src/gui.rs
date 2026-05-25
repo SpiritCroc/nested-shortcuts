@@ -39,7 +39,7 @@ impl From<MenuAction> for Message {
 }
 
 impl MenuEntry {
-    fn label(&self) -> iced::widget::text::Rich<'_, Message> {
+    fn label(&self) -> iced::widget::text::Rich<'_, (), Message> {
         if let Some(c) = &self.shortcut {
             let hint_offset = &self.shortcut_hint_offset.unwrap_or_default();
             let index = if *hint_offset <= 0 {
@@ -175,11 +175,17 @@ impl MenuWidget {
     }
 
     fn keyboard_subscription(&self) -> Subscription<Message> {
-        keyboard::on_key_press(|key, _|
-            match key {
-                Key::Character(c) => Some(Message::ShortcutKey { key: c.to_string() }),
-                Key::Named(keyboard::key::Named::Escape) => Some(Message::NavigateBack),
-                Key::Named(keyboard::key::Named::Backspace) => Some(Message::NavigateBack),
+        keyboard::listen().filter_map(|event|
+            match event {
+                keyboard::Event::KeyPressed { key: Key::Character(c), .. } => {
+                    Some(Message::ShortcutKey { key: c.to_string() })
+                }
+                keyboard::Event::KeyPressed { key: Key::Named(keyboard::key::Named::Escape), .. } => {
+                    Some(Message::NavigateBack)
+                }
+                keyboard::Event::KeyPressed { key: Key::Named(keyboard::key::Named::Backspace), .. } => {
+                    Some(Message::NavigateBack)
+                }
                 _ => None,
             }
         )
